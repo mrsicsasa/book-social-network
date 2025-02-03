@@ -50,6 +50,7 @@ public class EmailService {
         Context context = new Context();
         context.setVariables(properites);
         helper.setFrom("contact@book-social-tutorial.com");
+        helper.setTo(to);
         helper.setSubject(subject);
         String template = templateEngine.process(templateName, context);
         helper.setText(template, true);
