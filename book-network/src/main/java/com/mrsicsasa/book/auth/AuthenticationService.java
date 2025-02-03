@@ -1,11 +1,15 @@
 package com.mrsicsasa.book.auth;
 
+import com.mrsicsasa.book.email.EmailService;
+import com.mrsicsasa.book.email.EmailTemplateName;
 import com.mrsicsasa.book.role.RoleRepository;
 import com.mrsicsasa.book.user.Token;
 import com.mrsicsasa.book.user.TokenRepository;
 import com.mrsicsasa.book.user.User;
 import com.mrsicsasa.book.user.UserRepository;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +26,11 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
+    private final EmailService emailService;
+    @Value("${spring.application.mailing.frontend.activation-url}")
+    private String activationUrl;
 
-    public void registerUser(RegistrationRequest request) {
+    public void registerUser(RegistrationRequest request) throws MessagingException {
         var userRole = roleRepository.findByName("USER")
                 // todo - better exception handling
                 .orElseThrow(() -> new IllegalStateException("ROLE USER was not initialized"));
@@ -40,9 +47,16 @@ public class AuthenticationService {
         sendValidationEmail(user);
     }
 
-    private void sendValidationEmail(User user) {
+    private void sendValidationEmail(User user) throws MessagingException {
         var newToken = generateAndSaveAuthenticationToken(user);
-        //send email
+        emailService.sendEmail(
+                user.getEmail(),
+                user.fullName(),
+                EmailTemplateName.ACTIVATE_ACCOUNT,
+                activationUrl,
+                newToken,
+                "Account activation"
+        );
     }
 
     private String generateAndSaveAuthenticationToken(User user) {
