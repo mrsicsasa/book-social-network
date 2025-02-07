@@ -15,7 +15,7 @@ public class BookMapper {
                 .build();
     }
 
-    public static BookResponse toBookResponse(Book book) {
+    public BookResponse toBookResponse(Book book) {
         return BookResponse.builder()
                 .id(book.getId())
                 .title(book.getTitle())
