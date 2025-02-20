@@ -1,6 +1,7 @@
 package com.mrsicsasa.book.book;
 
 import com.mrsicsasa.book.common.PageResponse;
+import com.mrsicsasa.book.exception.OperationNotPermittedException;
 import com.mrsicsasa.book.history.BookTransactionHistory;
 import com.mrsicsasa.book.history.BookTransactionHistoryRepository;
 import com.mrsicsasa.book.user.User;
@@ -113,10 +114,22 @@ public class BookService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(()-> new EntityNotFoundException("No book found with ID::"+ bookId));
         User user = ((User) connectedUser.getPrincipal());
-        if(!Objects.equals(book.getOwner().getBooks(), user.getId())){
-            throw  new OperationNotPermittedExcpetion("You cannot update books sharable status");
+        if(!Objects.equals(book.getOwner().getId(), user.getId())){
+            throw  new OperationNotPermittedException("You cannot update others books sharable status");
         }
         book.setShareable(!book.isShareable());
+        bookRepository.save(book);
+        return bookId;
+    }
+
+    public Integer updateArchivedStatus(Integer bookId, Authentication connectedUser) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(()-> new EntityNotFoundException("No book found with ID::"+ bookId));
+        User user = ((User) connectedUser.getPrincipal());
+        if(!Objects.equals(book.getOwner().getId(), user.getId())){
+            throw  new OperationNotPermittedException("You cannot update books others archived status");
+        }
+        book.setArchived(!book.isArchived());
         bookRepository.save(book);
         return bookId;
     }
