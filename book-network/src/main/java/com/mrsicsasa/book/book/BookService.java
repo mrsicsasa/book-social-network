@@ -1,6 +1,8 @@
 package com.mrsicsasa.book.book;
 
 import com.mrsicsasa.book.common.PageResponse;
+import com.mrsicsasa.book.history.BookTransactionHistory;
+import com.mrsicsasa.book.history.BookTransactionHistoryRepository;
 import com.mrsicsasa.book.user.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import static java.util.stream.Collectors.toList;
 public class BookService {
     private final BookMapper bookMapper;
     private final BookRepository bookRepository;
+    private final BookTransactionHistoryRepository bookTransactionHistoryRepository;
     public Integer save(BookRequest request, Authentication connectedUser) {
         User user = ((User) connectedUser.getPrincipal());
         Book book = bookMapper.toBook(request);
@@ -66,6 +69,24 @@ public class BookService {
                 books.getTotalPages(),
                 books.isFirst(),
                 books.isLast()
+        );
+    }
+
+    public PageResponse<BorrowedBookResponse> findAllBorrowedBooks(int page, int size, Authentication connectedUser) {
+        User user = ((User) connectedUser.getPrincipal());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page< BookTransactionHistory> allBorrowedBooks = bookTransactionHistoryRepository.findAllBorrowedBooks(pageable, user.getId());
+        List<BorrowedBookResponse> bookResponses = allBorrowedBooks.stream()
+                .map(bookMapper::toBorrowedResponse)
+                .toList();
+        return new PageResponse<>(
+                bookResponses,
+                allBorrowedBooks.getNumber(),
+                allBorrowedBooks.getSize(),
+                allBorrowedBooks.getTotalElements(),
+                allBorrowedBooks.getTotalPages(),
+                allBorrowedBooks.isFirst(),
+                allBorrowedBooks.isLast()
         );
     }
 }
