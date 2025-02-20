@@ -44,7 +44,6 @@ public class BookController {
             Authentication connectedUser
     ) {
         return ResponseEntity.ok(service.findAllBooksByOwner(page, size, connectedUser));
-
     }
     @GetMapping("/borrowed")
     public ResponseEntity<PageResponse<BorrowedBookResponse>> findAllBorrowedBooks(
@@ -53,7 +52,6 @@ public class BookController {
             Authentication connectedUser
     ) {
         return ResponseEntity.ok(service.findAllBorrowedBooks(page, size, connectedUser));
-
     }
     @GetMapping("/returned")
     public ResponseEntity<PageResponse<BorrowedBookResponse>> findAllReturnedBooks(
@@ -62,6 +60,12 @@ public class BookController {
             Authentication connectedUser
     ) {
         return ResponseEntity.ok(service.findAllReturnedBooks(page, size, connectedUser));
-
+    }
+    @PatchMapping("/shareable/{book-id}")
+    public ResponseEntity<Integer> updateShareableStatus(
+            @PathVariable("book-id") Integer bookId,
+            Authentication connectedUser
+    ){
+        return  ResponseEntity.ok(service.updateSharableStatus(bookId, connectedUser));
     }
 }
