@@ -2,6 +2,7 @@ package com.mrsicsasa.book.book;
 
 import com.mrsicsasa.book.common.PageResponse;
 import com.mrsicsasa.book.exception.OperationNotPermittedException;
+import com.mrsicsasa.book.file.FileStorageService;
 import com.mrsicsasa.book.history.BookTransactionHistory;
 import com.mrsicsasa.book.history.BookTransactionHistoryRepository;
 import com.mrsicsasa.book.user.User;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +29,7 @@ public class BookService {
     private final BookMapper bookMapper;
     private final BookRepository bookRepository;
     private final BookTransactionHistoryRepository bookTransactionHistoryRepository;
-    private final TransactionDefinition transactionDefinition;
+    private final FileStorageService fileStorageService;
 
     public Integer save(BookRequest request, Authentication connectedUser) {
         User user = ((User) connectedUser.getPrincipal());
@@ -192,4 +194,13 @@ public class BookService {
         bookTransactionHistory.setReturnedApproved(true);
         return bookTransactionHistoryRepository.save(bookTransactionHistory).getId();
     }
-}
+
+    public void uploadBookCoverPicture(MultipartFile file, Authentication connectedUser, Integer bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(()-> new EntityNotFoundException("No book found with the ID::"+bookId));
+        User user = ((User) connectedUser.getPrincipal());
+        var bookCover = fileStorageService.saveFile(file,user.getId());
+        book.setBookCover(bookCover);
+        bookRepository.save(book);
+        }
+    }
