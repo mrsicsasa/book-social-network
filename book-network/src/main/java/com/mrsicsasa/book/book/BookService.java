@@ -6,6 +6,7 @@ import com.mrsicsasa.book.history.BookTransactionHistory;
 import com.mrsicsasa.book.history.BookTransactionHistoryRepository;
 import com.mrsicsasa.book.user.User;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -154,6 +155,22 @@ public class BookService {
                 .returned(false)
                 .returnedApproved(false)
                 .build();
+        return bookTransactionHistoryRepository.save(bookTransactionHistory).getId();
+    }
+
+    public Integer returnBorrowedBook(Integer bookId, Authentication connectedUser) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(()-> new EntityNotFoundException("No book found with the ID::"+bookId));
+        if(book.isArchived() || !book.isShareable()){
+            throw new OperationNotPermittedException("The book cant be borrowed since it is archived or not shareable");
+        }
+        User user = ((User) connectedUser.getPrincipal());
+        if(Objects.equals(book.getOwner().getId(), user.getId())){
+            throw  new OperationNotPermittedException("You cannot borrow or return your own book");
+        }
+        BookTransactionHistory bookTransactionHistory = bookTransactionHistoryRepository.findByBookIdAndUserId(bookId, user.getId())
+                .orElseThrow(()-> new OperationNotPermittedException("You did not borrowed this book"));
+        bookTransactionHistory.setReturned(true);
         return bookTransactionHistoryRepository.save(bookTransactionHistory).getId();
     }
 }
